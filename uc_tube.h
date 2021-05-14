@@ -51,13 +51,18 @@ class UC_tube : public QObject
         read_input_value_request
     } UTE_read_data_type;
 
-    QSerialPort port;
+
     UStr_rs232_settings settings;
     QList<UTE_read_data_type> read_data_type;
     QTimer * timer;
 
     int xcmdset;
     int whatchdog_timeout;
+
+    public :
+
+    QSerialPort port;
+
 
 public:
     explicit UC_tube(QObject *parent = nullptr);
@@ -137,8 +142,9 @@ public slots:
     void U_clear_output_value(char port, int output);
     void U_read_input_value_request(char port, int output);
 private slots:
-    void U_habdle_error(QSerialPort::SerialPortError error);
+    void U_handle_error(QSerialPort::SerialPortError error);
     void U_read_data();
+    void U_refrash_data();
 };
 
 #endif // UC_TUBE_H

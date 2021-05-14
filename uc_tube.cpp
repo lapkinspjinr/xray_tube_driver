@@ -18,8 +18,10 @@ void UC_tube::U_connect_port() {
             port.setFlowControl(settings.flowControl)) {
             if (port.isOpen()) {
                 /*открыт*/
+                US_error_port("Port is open!!");
             } else {
                 /*не открыт*/
+                US_error_port("Port is not open!!");
             }
         } else {
             port.close();
@@ -29,6 +31,7 @@ void UC_tube::U_connect_port() {
         port.close();
         US_error_port(port.errorString().toLocal8Bit());
     }
+    U_initialization();
 }
 
 void UC_tube::U_disconnect_port() {
@@ -49,6 +52,7 @@ void UC_tube::U_write_settings(QString name, int baudrate, int DataBits, int Par
     settings.parity = static_cast<QSerialPort::Parity>(Parity);
     settings.stopBits = static_cast<QSerialPort::StopBits>(StopBits);
     settings.flowControl = static_cast<QSerialPort::FlowControl>(FlowControl);
+    U_connect_port();
 }
 
 void UC_tube::U_write_data(QByteArray data) {
@@ -66,7 +70,7 @@ void UC_tube::U_whatchdog_settings(bool enable, int s) {
         U_write_data(QString("MW%1\n").arg(s, 3, 10, QChar('0')).toLatin1());
         timer->stop();
         timer->setInterval(whatchdog_timeout / 2);
-        connect(timer, SIGNAL(timeout()), this, SLOT(U_read_port_a_request()));
+        connect(timer, SIGNAL(timeout()), this, SLOT(U_refrash_data()));
         timer->start();
     } else {
         U_write_data("WD\n");
@@ -87,6 +91,7 @@ void UC_tube::U_initialization() {
     U_write_data("CPA11111100\n");
     U_write_data("RESPA0\n");
     U_write_data("RESPA1\n");
+    //U_whatchdog_settings(true, 2);
 }
 
 
@@ -273,7 +278,7 @@ void UC_tube::U_read_input_value_request(char port, int output) {
 }
 
 /////////////private slot///////////////////
-void UC_tube::U_habdle_error(QSerialPort::SerialPortError error) {
+void UC_tube::U_handle_error(QSerialPort::SerialPortError error) {
     if (port.isOpen() && (error == QSerialPort::ResourceError)) {
         US_error_port(port.errorString().toLocal8Bit());
         U_disconnect_port();
@@ -403,4 +408,9 @@ void UC_tube::U_read_data() {
         }
         read_data_type.removeFirst();
     }
+}
+
+void UC_tube::U_refrash_data() {
+    U_read_port_a_request();
+    U_analog_data_request();
 }

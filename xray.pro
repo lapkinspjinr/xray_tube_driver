@@ -4,9 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui serialport
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui serialport charts printsupport
 
 TARGET = xray
 TEMPLATE = app
@@ -27,11 +26,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         xray.cpp \
-    uc_tube.cpp
+    uc_tube.cpp \
+    qcustomplot.cpp
 
 HEADERS += \
         xray.h \
-    uc_tube.h
+    uc_tube.h \
+    qcustomplot.h
 
 FORMS += \
         xray.ui
