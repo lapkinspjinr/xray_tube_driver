@@ -39,6 +39,8 @@ private:
 
     UC_tube *  tube;
     QThread * second_thread;
+    QTimer * timer;
+    QTimer * reset_timer;
 
     QTime *timeNow;
     /*Validators*/
@@ -79,8 +81,11 @@ signals :
     void US_start();
     void US_initialize();
     void US_fault_reset();
+    void US_fault_reset_standby();
     void US_set_voltage(double voltage);
     void US_set_current(double current);
+    void US_test_data(QByteArray data);
+    void US_x_ray_enable(bool enable);
 
 private slots:
     void on_lineVoltage_returnPressed();
@@ -100,16 +105,20 @@ private slots:
     void addPoint(double v, double c, double t);
     void plot();
 
+
     void on_pushButtonQuit_released();
     void on_pushButton_XrayOn_clicked();
     void on_pushButtonFaultReset_released();
     void on_pushButton_clicked();
 
     void U_add_text(QString str);
-
+    void U_print_test_data(QString str);
+    void U_fault_xray_disable();
+    void U_fault_reset_standby();
 
     void on_pushButtonFaultReset_clicked();
     void on_pushButton_2_clicked();
+    void on_test_pushButton_clicked();
 };
 
 #endif // XRAY_H

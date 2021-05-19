@@ -24,6 +24,8 @@ xray::xray(QWidget *parent) :
     ui->labelXrayOnBox->setStyleSheet("QLabel { background-color : black;}");
 
     tube = new UC_tube();
+    timer = new QTimer();
+    reset_timer = new QTimer();
 
     //QCustomPlot
     // configure bottom axis to show date instead of number:
@@ -52,6 +54,7 @@ xray::xray(QWidget *parent) :
     second_thread->start();
 
     U_find_ports();
+    ui->test_response_plainTextEdit->setMaximumBlockCount(1000);
 
 }
 
@@ -64,38 +67,43 @@ xray::~xray()
 
 void xray::connectWidget()
 {
-    connect(ui->lineVoltage, SIGNAL(returnPressed()), this, SLOT(on_lineVoltage_returnPressed()), Qt::DirectConnection);
-    connect(ui->lineCurrent, SIGNAL(returnPressed()), this, SLOT(on_lineCurrent_returnPressed()), Qt::DirectConnection);
-    connect(ui->lineVoltage, SIGNAL(returnPressed()), this, SLOT(setUserVoltage()), Qt::DirectConnection);
-    connect(ui->lineCurrent, SIGNAL(returnPressed()), this, SLOT(setUserCurrent()), Qt::DirectConnection);
-    connect(ui->pushButtonFaultReset, SIGNAL(released()), this, SLOT(on_pushButtonFaultReset_released()), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_voltage_data(double)), this, SLOT(displayVoltage(double)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_current_data(double)), this, SLOT(displayCurrent(double)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_ready_status_data(bool)), this, SLOT(displayReady(bool)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_overvoltage_status_data(bool)), this, SLOT(displayOvervoltage(bool)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_overcurrent_status_data(bool)), this, SLOT(displayOvercurrent(bool)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_arc_status_data(bool)), this, SLOT(displayArc(bool)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_interlock_voltage_data(double)), this, SLOT(displayInterlock(double)), Qt::DirectConnection);
-    connect(tube, SIGNAL(US_input_line_voltage_data(double)), this, SLOT(display24Vsupply(double)), Qt::DirectConnection);
+    connect(ui->lineVoltage, SIGNAL(returnPressed()), this, SLOT(on_lineVoltage_returnPressed()));
+    connect(ui->lineCurrent, SIGNAL(returnPressed()), this, SLOT(on_lineCurrent_returnPressed()));
+    connect(ui->lineVoltage, SIGNAL(returnPressed()), this, SLOT(setUserVoltage()));
+    connect(ui->lineCurrent, SIGNAL(returnPressed()), this, SLOT(setUserCurrent()));
+    connect(ui->pushButtonFaultReset, SIGNAL(released()), this, SLOT(on_pushButtonFaultReset_released()));
+    connect(tube, SIGNAL(US_voltage_data(double)), this, SLOT(displayVoltage(double)));
+    connect(tube, SIGNAL(US_current_data(double)), this, SLOT(displayCurrent(double)));
+    connect(tube, SIGNAL(US_ready_status_data(bool)), this, SLOT(displayReady(bool)));
+    connect(tube, SIGNAL(US_overvoltage_status_data(bool)), this, SLOT(displayOvervoltage(bool)));
+    connect(tube, SIGNAL(US_overcurrent_status_data(bool)), this, SLOT(displayOvercurrent(bool)));
+    connect(tube, SIGNAL(US_arc_status_data(bool)), this, SLOT(displayArc(bool)));
+    connect(tube, SIGNAL(US_interlock_voltage_data(double)), this, SLOT(displayInterlock(double)));
+    connect(tube, SIGNAL(US_input_line_voltage_data(double)), this, SLOT(display24Vsupply(double)));
 
    // connect(ui->pushButton_XrayOn, SIGNAL(clicked())), this, SLOT(on_pushButton_XrayOn_clicked()), Qt::DirectConnection);
     connect(tube,SIGNAL(US_xray_status_data(bool)),this,SLOT(displayXrayOn(bool)));
 
 
 
-    connect(second_thread,  SIGNAL(started()),                                              tube,           SLOT(U_start()),                                            Qt::DirectConnection);
-    connect(tube,           SIGNAL(US_finished()),                                          second_thread,  SLOT(quit()),                                               Qt::DirectConnection);
-    connect(second_thread,  SIGNAL(finished()),                                             tube,           SLOT(deleteLater()),                                        Qt::DirectConnection);
-    connect(second_thread,  SIGNAL(finished()),                                             &tube->port,    SLOT(deleteLater()),                                        Qt::DirectConnection);
-    connect(tube,           SIGNAL(US_finished()),                                          second_thread,  SLOT(deleteLater()),                                        Qt::DirectConnection);
-    connect(this,           SIGNAL(US_write_settings(QString, int, int, int, int, int)),    tube,           SLOT(U_write_settings(QString, int, int, int, int, int)),   Qt::DirectConnection);
-    connect(this,           SIGNAL(US_connect_port()),                                      tube,           SLOT(U_connect_port()),                                     Qt::DirectConnection);
-    connect(this,           SIGNAL(US_disconnect_port()),                                   tube,           SLOT(U_disconnect_port()),                                  Qt::DirectConnection);
-    connect(this,           SIGNAL(US_initialize()),                                        tube,           SLOT(U_initialization()),                                   Qt::DirectConnection);
-    connect(this,           SIGNAL(US_set_voltage(double)),                                 tube,           SLOT(U_set_voltage(double)),                                Qt::DirectConnection);
-    connect(this,           SIGNAL(US_set_current(double)),                                 tube,           SLOT(U_set_current(double)),                                Qt::DirectConnection);
-    connect(tube,           SIGNAL(US_error_port(QString)),                                 this,           SLOT(U_add_text(QString)),                                  Qt::DirectConnection);
-    connect(this,           SIGNAL(US_fault_reset()),                                       tube,           SLOT(U_fault_reset()),                                      Qt::DirectConnection);
+    connect(second_thread,  SIGNAL(started()),                                              tube,           SLOT(U_start()));
+    connect(tube,           SIGNAL(US_finished()),                                          second_thread,  SLOT(quit()));
+    connect(second_thread,  SIGNAL(finished()),                                             tube,           SLOT(deleteLater()));
+    connect(tube,           SIGNAL(US_finished()),                                          second_thread,  SLOT(deleteLater()));
+    connect(this,           SIGNAL(US_write_settings(QString, int, int, int, int, int)),    tube,           SLOT(U_write_settings(QString, int, int, int, int, int)));
+    connect(this,           SIGNAL(US_connect_port()),                                      tube,           SLOT(U_connect_port()));
+    connect(this,           SIGNAL(US_disconnect_port()),                                   tube,           SLOT(U_disconnect_port()));
+    connect(this,           SIGNAL(US_initialize()),                                        tube,           SLOT(U_initialization()));
+    connect(this,           SIGNAL(US_set_voltage(double)),                                 tube,           SLOT(U_set_voltage(double)));
+    connect(this,           SIGNAL(US_set_current(double)),                                 tube,           SLOT(U_set_current(double)));
+    connect(tube,           SIGNAL(US_error_port(QString)),                                 this,           SLOT(U_add_text(QString)));
+    connect(this,           SIGNAL(US_fault_reset()),                                       tube,           SLOT(U_fault_reset()));
+    connect(this,           SIGNAL(US_fault_reset_standby()),                               tube,           SLOT(U_fault_reset_standby()));
+    connect(this,           SIGNAL(US_test_data(QByteArray)),                               tube,           SLOT(U_write_data(QByteArray)));
+    connect(tube,           SIGNAL(US_error_port(QString)),                                 this,           SLOT(U_print_test_data(QString)));
+    connect(tube,           SIGNAL(US_data_ready(QString)),                                 this,           SLOT(U_print_test_data(QString)));
+    connect(this,           SIGNAL(US_x_ray_enable(bool)),                                  tube,           SLOT(U_x_ray_enable(bool)));
+
 }
 
 void xray::on_lineVoltage_returnPressed()
@@ -122,13 +130,13 @@ void xray::setDevCurrent(double current)
 
 void xray:: setUserVoltage()
 {
-    value_voltage=lineVoltage->text().toDouble();
+    value_voltage=ui->lineVoltage->text().toDouble();
     setDevVoltage(value_voltage);
 }
 
 void xray::setUserCurrent()
 {
-    value_current=lineCurrent->text().toDouble();
+    value_current=ui->lineCurrent->text().toDouble();
     setDevCurrent(value_current);
 }
 
@@ -166,7 +174,7 @@ void xray::on_pushButton_XrayOn_clicked()
         ui->pushButton_XrayOn->setText("X-ray On");
         xray_enable = false;
     }
-    tube->U_x_ray_enable(xray_enable);
+    emit US_x_ray_enable(xray_enable);
     //draw plots
     //addPoint(tube->U_voltage_request(),tube->U_current_request();timeNow->currentTime());
     //plot();
@@ -180,32 +188,56 @@ void xray::displayReady(bool ready)
 
 void xray::displayOvervoltage(bool overvoltage)
 {
-    if (overvoltage) ui->labelOvervoltageBox->setStyleSheet("QLabel { background-color : green;}");
-    else  ui->labelOvervoltageBox->setStyleSheet("QLabel { background-color : red;}");
+    if (overvoltage) {
+        ui->labelOvervoltageBox->setStyleSheet("QLabel { background-color : green;}");
+
+    }
+    else {
+        ui->labelOvervoltageBox->setStyleSheet("QLabel { background-color : red;}");
+        U_fault_xray_disable();
+    }
 }
 
 void xray::displayOvercurrent(bool overcurrent)
 {
-    if (overcurrent) ui->labelOvercurrentBox->setStyleSheet("QLabel { background-color : green;}");
-    else  ui->labelOvercurrentBox->setStyleSheet("QLabel { background-color : red;}");
+    if (overcurrent) {
+        ui->labelOvercurrentBox->setStyleSheet("QLabel { background-color : green;}");
+
+    }
+    else  {
+        ui->labelOvercurrentBox->setStyleSheet("QLabel { background-color : red;}");
+        U_fault_xray_disable();
+    }
 }
 
 void xray::displayArc(bool arc)
 {
-    if (arc) ui->labelArcBox->setStyleSheet("QLabel { background-color : green;}");
-    else  ui->labelArcBox->setStyleSheet("QLabel { background-color : red;}");
+    if (arc) {
+        ui->labelArcBox->setStyleSheet("QLabel { background-color : green;}");
+
+    }
+    else  {
+        ui->labelArcBox->setStyleSheet("QLabel { background-color : red;}");
+        U_fault_xray_disable();
+    }
 }
 
 void xray::display24Vsupply(double V)
 {
-    if (V>=32.55) ui->label24VsupplyBox->setStyleSheet("QLabel { background-color : green;}");
-    else  ui->label24VsupplyBox->setStyleSheet("QLabel { background-color : red;}");
+    if (V>=20) ui->label24VsupplyBox->setStyleSheet("QLabel { background-color : green;}");
+    else  {
+        ui->label24VsupplyBox->setStyleSheet("QLabel { background-color : red;}");
+        U_fault_xray_disable();
+    }
 }
 
 void xray::displayInterlock(double V)
 {
     if (V>=15) ui->labelInterlockBox->setStyleSheet("QLabel { background-color : green;}");
-    else  ui->labelInterlockBox->setStyleSheet("QLabel { background-color : red;}");
+    else  {
+        ui->labelInterlockBox->setStyleSheet("QLabel { background-color : red;}");
+        U_fault_xray_disable();
+    }
 }
 
 void xray::addPoint(double v, double c, double t)
@@ -228,7 +260,10 @@ void xray::plot()
 
 void xray::on_pushButtonFaultReset_released()
 {
-    //tube->U_fault_reset();
+    emit US_fault_reset();
+    reset_timer->setInterval(200);
+    connect(reset_timer, SIGNAL(timeout()), tube, SLOT(U_fault_reset_standby()));
+    reset_timer->start();
 }
 
 void xray::U_find_ports()
@@ -242,13 +277,35 @@ void xray::U_find_ports()
 void xray::on_pushButton_clicked()
 {
     emit US_write_settings(ui->comboBox->currentText(), 9600, QSerialPort::DataBits::Data8, QSerialPort::Parity::NoParity, QSerialPort::StopBits::OneStop, QSerialPort::FlowControl::NoFlowControl);
-    /*emit US_connect_port();
-    emit US_initialize();*/
+    timer->setInterval(200);
+    connect(timer, SIGNAL(timeout()), tube, SLOT(U_refrash_data()));
+    timer->start();
 }
 
 void xray::U_add_text(QString str)
 {
     ui->textStatus->setPlainText(str);
+}
+
+void xray::U_print_test_data(QString str)
+{
+    ui->test_response_plainTextEdit->textCursor().insertText(str + '\r'); // Вывод текста в консоль
+    ui->test_response_plainTextEdit->moveCursor(QTextCursor::End);//Scroll
+}
+
+void xray::U_fault_reset_standby()
+{
+    emit US_fault_reset_standby();
+    reset_timer->stop();
+}
+
+void xray::U_fault_xray_disable()
+{
+    if (xray_enable) {
+        ui->pushButton_XrayOn->setText("X-ray On");
+    }
+    xray_enable = false;
+    emit US_x_ray_enable(xray_enable);
 }
 
 void xray::on_pushButtonFaultReset_clicked()
@@ -259,4 +316,14 @@ void xray::on_pushButtonFaultReset_clicked()
 void xray::on_pushButton_2_clicked()
 {
     emit US_disconnect_port();
+    timer->stop();
+}
+
+void xray::on_test_pushButton_clicked()
+{
+    QString str;
+    str = ui->test_lineEdit->text();
+    str += '\r';
+    emit US_test_data(str.toLocal8Bit());
+    U_print_test_data(str);
 }

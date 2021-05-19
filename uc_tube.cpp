@@ -5,6 +5,7 @@ UC_tube::UC_tube(QObject *parent) : QObject(parent) {
 }
 
 UC_tube::~UC_tube() {
+    U_disconnect_port();
     emit US_finished();
 }
 ////////public slot////////////////
@@ -18,10 +19,11 @@ void UC_tube::U_connect_port() {
             port.setFlowControl(settings.flowControl)) {
             if (port.isOpen()) {
                 /*открыт*/
-                US_error_port("Port is open!!");
+                US_error_port("Port is opened!!");
+                U_initialization();
             } else {
                 /*не открыт*/
-                US_error_port("Port is not open!!");
+                US_error_port("Port is not opened!!");
             }
         } else {
             port.close();
@@ -31,12 +33,12 @@ void UC_tube::U_connect_port() {
         port.close();
         US_error_port(port.errorString().toLocal8Bit());
     }
-    U_initialization();
 }
 
 void UC_tube::U_disconnect_port() {
     if (port.isOpen()) {
         port.close();
+        US_error_port("Port is closed!!");
     }
 }
 
@@ -65,196 +67,184 @@ void UC_tube::U_write_data(QByteArray data) {
 
 void UC_tube::U_whatchdog_settings(bool enable, int s) {
     if (enable) {
-        U_write_data("WE\n");
+        U_write_data("WE\r");
         whatchdog_timeout = s;
-        U_write_data(QString("MW%1\n").arg(s, 3, 10, QChar('0')).toLatin1());
-        timer->stop();
-        timer->setInterval(whatchdog_timeout / 2);
-        connect(timer, SIGNAL(timeout()), this, SLOT(U_refrash_data()));
-        timer->start();
+        U_write_data(QString("MW%1\r").arg(s, 3, 10, QChar('0')).toLatin1());
     } else {
-        U_write_data("WD\n");
+        U_write_data("WD\r");
     }
 }
 
 void UC_tube::U_whatchdog_enable_request() {
     read_data_type.append(whatchdog_enable_request);
-    U_write_data("WR\n");
+    U_write_data("WR\r");
 }
 
 void UC_tube::U_whatchdog_timeout_request() {
     read_data_type.append(whatchdog_timeout_request);
-    U_write_data("PW\n");
+    U_write_data("PW\r");
 }
 
 void UC_tube::U_initialization() {
-    U_write_data("CPA11111100\n");
-    U_write_data("RESPA0\n");
-    U_write_data("RESPA1\n");
-    //U_whatchdog_settings(true, 2);
+    U_write_data("CPA11111100\r");
+    U_write_data("RESPA0\r");
+    U_write_data("RESPA1\r");
+    US_error_port("Initiallization!!");
 }
 
 
 void UC_tube::U_x_ray_enable(bool enable) {
     if (enable) {
-        U_write_data("SETPA0\n");
+        U_write_data("SETPA0\r");
     } else {
-        U_write_data("RESPA0\n");
+        U_write_data("RESPA0\r");
     }
 }
 
 void UC_tube::U_fault_reset() {
-    U_write_data("SETPA0\n");
-    timer->stop();
-    timer->setInterval(150);
-    connect(timer, SIGNAL(timeout()), this, SLOT(U_fault_reset_standby()));
-    timer->start();
+    U_write_data("SETPA0\r");
 }
 
 void UC_tube::U_fault_reset_standby() {
-    U_write_data("RESPA0\n");
-    timer->stop();
-    timer->setInterval(whatchdog_timeout / 2);
-    connect(timer, SIGNAL(timeout()), this, SLOT(U_read_port_a_request()));
-    timer->start();
+    U_write_data("RESPA0\r");
 }
 
 void UC_tube::U_set_voltage(double V) {
-    int voltage_int = static_cast<int>(std::round(4095 * V / 80000));
-    U_write_data(QString("VA%1\n").arg(voltage_int, 4, 10, QChar('0')).toLatin1());
+    int voltage_int = static_cast<int>(std::round(4095 * V / 120));
+    U_write_data(QString("VA%1\r").arg(voltage_int, 4, 10, QChar('0')).toLatin1());
 }
 
 void UC_tube::U_set_current(double uA) {
-    int voltage_int = static_cast<int>(std::round(4095 * uA / 250));
-    U_write_data(QString("VA%1\n").arg(voltage_int, 4, 10, QChar('0')).toLatin1());
+    int current_int = static_cast<int>(std::round(4095 * uA / 350));
+    U_write_data(QString("VB%1\r").arg(current_int, 4, 10, QChar('0')).toLatin1());
 }
 
 void UC_tube::U_ready_status_request() {
     read_data_type.append(ready_status_request);
-    U_write_data("RPA2\n");
+    U_write_data("RPA2\r");
 }
 
 void UC_tube::U_xray_status_request() {
     read_data_type.append(xray_status_request);
-    U_write_data("RPA3\n");
+    U_write_data("RPA3\r");
 }
 
 void UC_tube::U_fault_status_request() {
     read_data_type.append(fault_status_request);
-    U_write_data("RPA4\n");
+    U_write_data("RPA4\r");
 }
 
 void UC_tube::U_arc_status_request() {
     read_data_type.append(arc_status_request);
-    U_write_data("RPA5\n");
+    U_write_data("RPA5\r");
 }
 
 void UC_tube::U_overvoltage_status_request() {
     read_data_type.append(overvoltage_status_request);
-    U_write_data("RPA6\n");
+    U_write_data("RPA6\r");
 }
 
 void UC_tube::U_overcurrent_status_request() {
     read_data_type.append(overcurrent_status_request);
-    U_write_data("RPA7\n");
+    U_write_data("RPA7\r");
 }
 
 void UC_tube::U_overtemp_status_request() {
     read_data_type.append(overtemp_status_request);
-    U_write_data("RPB0\n");
+    U_write_data("RPB0\r");
 }
 
 void UC_tube::U_read_port_a_request() {
     read_data_type.append(read_port_a_request);
-    U_write_data("RPA\n");
+    U_write_data("RPA\r");
 }
 
 void UC_tube::U_read_port_b_request() {
     read_data_type.append(read_port_b_request);
-    U_write_data("RPB\n");
+    U_write_data("RPB\r");
 }
 
 void UC_tube::U_voltage_request() {
     read_data_type.append(voltage_request);
-    U_write_data("RD0\n");
+    U_write_data("RD0\r");
 }
 
 void UC_tube::U_current_request() {
     read_data_type.append(current_request);
-    U_write_data("RD1\n");
+    U_write_data("RD1\r");
 }
 
 void UC_tube::U_input_line_voltage_request() {
     read_data_type.append(input_line_voltage_request);
-    U_write_data("RD2\n");
+    U_write_data("RD2\r");
 }
 
 void UC_tube::U_interlock_voltage_request() {
     read_data_type.append(interlock_voltage_request);
-    U_write_data("RD3\n");
+    U_write_data("RD3\r");
 }
 
 void UC_tube::U_analog_data_request() {
     read_data_type.append(analog_data_request);
-    U_write_data("RD\n");
+    U_write_data("RD\r");
 }
 
 void UC_tube::U_command_set_request() {
     read_data_type.append(command_set_request);
-    U_write_data("XCMDSET\n");
+    U_write_data("XCMDSET\r");
 }
 
 void UC_tube::U_overcurrent_counter_request() {
     read_data_type.append(overcurrent_counter_request);
-    U_write_data("ECA7\n");
+    U_write_data("ECA7\r");
 }
 
 void UC_tube::U_overvoltage_counter_request() {
     read_data_type.append(overvoltage_counter_request);
-    U_write_data("ECA6\n");
+    U_write_data("ECA6\r");
 }
 
 void UC_tube::U_arc_counter_request() {
     read_data_type.append(arc_counter_request);
-    U_write_data("ECA5\n");
+    U_write_data("ECA5\r");
 }
 
 void UC_tube::U_clear_counters() {
-    U_write_data("CLREC\n");
+    U_write_data("CLREC\r");
 }
 
 void UC_tube::U_pulse_mode_enable() {
-    U_write_data("PE\n");
+    U_write_data("PE\r");
 }
 
 void UC_tube::U_pulse_mode_disable() {
-    U_write_data("PD\n");
+    U_write_data("PD\r");
 }
 
 void UC_tube::U_pulse_mode_set_period(int ms) {
-    U_write_data(QString("PP%1\n").arg(ms, 5, 10, QChar('0')).toLatin1());
+    U_write_data(QString("PP%1\r").arg(ms, 5, 10, QChar('0')).toLatin1());
 }
 
 void UC_tube::U_pulse_mode_set_width(int ms) {
-    U_write_data(QString("PT%1\n").arg(ms, 5, 10, QChar('0')).toLatin1());
+    U_write_data(QString("PT%1\r").arg(ms, 5, 10, QChar('0')).toLatin1());
 }
 
 void UC_tube::U_pulse_mode_set_number(int n) {
-    U_write_data(QString("PC%1\n").arg(n, 5, 10, QChar('0')).toLatin1());
+    U_write_data(QString("PC%1\r").arg(n, 5, 10, QChar('0')).toLatin1());
 }
 
 void UC_tube::U_pulse_config_request() {
-    U_write_data("PI\n");
+    U_write_data("PI\r");
 }
 
 void UC_tube::U_pulse_mode_enable_request() {
     read_data_type.append(pulse_mode_enable_request);
-    U_write_data("PS\n");
+    U_write_data("PS\r");
 }
 
 void UC_tube::U_analog_channel_data_request(int channel) {
     read_data_type.append(analog_channel_data_request);
-    U_write_data(QString("RAIN%1\n").arg(channel).toLatin1());
+    U_write_data(QString("RAIN%1\r").arg(channel).toLatin1());
 }
 
 void UC_tube::U_set_port_direction(char port, int direction_mask) {
@@ -263,17 +253,17 @@ void UC_tube::U_set_port_direction(char port, int direction_mask) {
 }
 
 void UC_tube::U_set_output_value(char port, int output) {
-    QString str = QString("SETB") + QChar(port) + QString("%1").arg(output);
+    QString str = QString("SETB") + QChar(port) + QString("%1").arg(output) + QChar('\r');
     U_write_data(str.toLatin1());
 }
 
 void UC_tube::U_clear_output_value(char port, int output) {
-    QString str = QString("CLRB") + QChar(port) + QString("%1").arg(output);
+    QString str = QString("CLRB") + QChar(port) + QString("%1").arg(output) + QChar('\r');
     U_write_data(str.toLatin1());
 }
 
 void UC_tube::U_read_input_value_request(char port, int output) {
-    QString str = QString("RDB") + QChar(port) + QString("%1").arg(output);
+    QString str = QString("RDB") + QChar(port) + QString("%1").arg(output) + QChar('\r');
     U_write_data(str.toLatin1());
 }
 
@@ -288,11 +278,13 @@ void UC_tube::U_handle_error(QSerialPort::SerialPortError error) {
 void UC_tube::U_read_data() {
     QByteArray data;
     data.append(port.readAll());
-    US_data_ready(data);
-    QList<QByteArray> received_data = data.split('\n');
+    US_data_ready(QString(data));
+    US_error_port(QString("Data received! ") + QString(data));
+    QList<QByteArray> received_data = data.split('\r');
     UTE_read_data_type current_data_type;
     QByteArray current_data;
     for (int i = 0; i < received_data.size(); i++) {
+        if (read_data_type.size() == 0) break;
         current_data_type = read_data_type[0];
         current_data = received_data[i];
         switch (current_data_type) {
@@ -309,23 +301,23 @@ void UC_tube::U_read_data() {
                 break;
             }
             case xray_status_request : {
-                emit US_xray_status_data(current_data == "0");
+                emit US_xray_status_data(current_data == "1");
                 break;
             }
             case fault_status_request : {
-                emit US_fault_status_data(current_data == "0");
+                emit US_fault_status_data(current_data == "1");
                 break;
             }
             case arc_status_request : {
-                emit US_arc_status_data(current_data == "0");
+                emit US_arc_status_data(current_data == "1");
                 break;
             }
             case overvoltage_status_request : {
-                emit US_overvoltage_status_data(current_data == "0");
+                emit US_overvoltage_status_data(current_data == "1");
                 break;
             }
             case overcurrent_status_request : {
-                emit US_overcurrent_status_data(current_data == "0");
+                emit US_overcurrent_status_data(current_data == "1");
                 break;
             }
             case overtemp_status_request : {
@@ -334,11 +326,11 @@ void UC_tube::U_read_data() {
             }
             case read_port_a_request : {
                 emit US_ready_status_data(current_data[10] == '0');
-                emit US_xray_status_data(current_data[8] == '0');
-                emit US_fault_status_data(current_data[6] == '0');
-                emit US_arc_status_data(current_data[4] == '0');
-                emit US_overvoltage_status_data(current_data[2] == '0');
-                emit US_overcurrent_status_data(current_data[0] == '0');
+                emit US_xray_status_data(current_data[8] == '1');
+                emit US_fault_status_data(current_data[6] == '1');
+                emit US_arc_status_data(current_data[4] == '1');
+                emit US_overvoltage_status_data(current_data[2] == '1');
+                emit US_overcurrent_status_data(current_data[0] == '1');
                 break;
             }
             case read_port_b_request : {
@@ -346,11 +338,11 @@ void UC_tube::U_read_data() {
                 break;
             }
             case voltage_request : {
-                emit US_voltage_data(QString(current_data).toDouble() * 80000 / 4095);
+                emit US_voltage_data(QString(current_data).toDouble() * 120 / 4095);
                 break;
             }
             case current_request : {
-                emit US_current_data(QString(current_data).toDouble() * 250 / 4095);
+                emit US_current_data(QString(current_data).toDouble() * 350 / 4095);
                 break;
             }
             case input_line_voltage_request : {
@@ -363,8 +355,8 @@ void UC_tube::U_read_data() {
             }
             case analog_data_request : {
                 QList<QByteArray> analog_data = current_data.split(' ');
-                emit US_voltage_data(QString(analog_data[0]).toDouble() * 80000 / 4095);
-                emit US_current_data(QString(analog_data[1]).toDouble() * 250 / 4095);
+                emit US_voltage_data(QString(analog_data[0]).toDouble() * 120 / 4095);
+                emit US_current_data(QString(analog_data[1]).toDouble() * 350 / 4095);
                 emit US_input_line_voltage_data(QString(analog_data[2]).toDouble() * 32.55 / 4095);
                 emit US_interlock_voltage_data(QString(analog_data[3]).toDouble() * 15 / 4095);
                 break;

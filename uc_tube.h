@@ -54,7 +54,6 @@ class UC_tube : public QObject
 
     UStr_rs232_settings settings;
     QList<UTE_read_data_type> read_data_type;
-    QTimer * timer;
 
     int xcmdset;
     int whatchdog_timeout;
