@@ -25,7 +25,6 @@ xray::xray(QWidget *parent) :
 
     tube = new UC_tube();
     timer = new QTimer();
-    reset_timer = new QTimer();
 
     //QCustomPlot
     // configure bottom axis to show date instead of number:
@@ -260,10 +259,7 @@ void xray::plot()
 
 void xray::on_pushButtonFaultReset_released()
 {
-    emit US_fault_reset();
-    reset_timer->setInterval(200);
-    connect(reset_timer, SIGNAL(timeout()), tube, SLOT(U_fault_reset_standby()));
-    reset_timer->start();
+
 }
 
 void xray::U_find_ports()
@@ -293,12 +289,6 @@ void xray::U_print_test_data(QString str)
     ui->test_response_plainTextEdit->moveCursor(QTextCursor::End);//Scroll
 }
 
-void xray::U_fault_reset_standby()
-{
-    emit US_fault_reset_standby();
-    reset_timer->stop();
-}
-
 void xray::U_fault_xray_disable()
 {
     if (xray_enable) {
@@ -310,13 +300,14 @@ void xray::U_fault_xray_disable()
 
 void xray::on_pushButtonFaultReset_clicked()
 {
-
+    timer->stop();
+    emit US_fault_reset();
 }
 
 void xray::on_pushButton_2_clicked()
 {
-    emit US_disconnect_port();
     timer->stop();
+    emit US_disconnect_port();
 }
 
 void xray::on_test_pushButton_clicked()
@@ -326,4 +317,10 @@ void xray::on_test_pushButton_clicked()
     str += '\r';
     emit US_test_data(str.toLocal8Bit());
     U_print_test_data(str);
+}
+
+void xray::on_pushButtonFaultReset_2_clicked()
+{
+    emit US_fault_reset_standby();
+    timer->start();
 }

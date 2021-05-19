@@ -40,7 +40,6 @@ private:
     UC_tube *  tube;
     QThread * second_thread;
     QTimer * timer;
-    QTimer * reset_timer;
 
     QTime *timeNow;
     /*Validators*/
@@ -114,11 +113,11 @@ private slots:
     void U_add_text(QString str);
     void U_print_test_data(QString str);
     void U_fault_xray_disable();
-    void U_fault_reset_standby();
 
     void on_pushButtonFaultReset_clicked();
     void on_pushButton_2_clicked();
     void on_test_pushButton_clicked();
+    void on_pushButtonFaultReset_2_clicked();
 };
 
 #endif // XRAY_H
