@@ -229,7 +229,7 @@
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>280</y>
+      <y>260</y>
       <width>88</width>
       <height>34</height>
      </rect>
@@ -242,7 +242,7 @@
     <property name="geometry">
      <rect>
       <x>70</x>
-      <y>320</y>
+      <y>340</y>
       <width>51</width>
       <height>34</height>
      </rect>
@@ -548,6 +548,19 @@
       </widget>
      </item>
     </layout>
+   </widget>
+   <widget class="QPushButton" name="pushButtonFaultReset_2">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>300</y>
+      <width>131</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Fault Reset disable</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
