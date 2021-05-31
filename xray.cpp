@@ -31,17 +31,23 @@ xray::xray(QWidget *parent) :
     QSharedPointer<QCPAxisTickerDateTime> dateTicker(new QCPAxisTickerDateTime);
     dateTicker->setDateTimeFormat("hh:mm");
     ui->plot_voltage->xAxis->setTicker(dateTicker);
-    ui->plot_current->xAxis->setTicker(dateTicker);
     ui->plot_voltage->xAxis->setTickLabels(false);
+    //ui->plot_voltage->yAxis->setLabel("Voltage, kV");
+
+    ui->plot_current->xAxis->setTicker(dateTicker);
     ui->plot_current->xAxis->setTickLabels(false);
+    //ui->plot_current->yAxis->setLabel("Current, uA");
 
     ui->plot_voltage->addGraph();
-    ui->plot_voltage->graph(0)->setScatterStyle(QCPScatterStyle::ssCircle);
-    ui->plot_voltage->graph(0)->setLineStyle(QCPGraph::lsLine);
+    ui->plot_voltage->graph()->setScatterStyle(QCPScatterStyle::ssCircle);
+    ui->plot_voltage->graph()->setLineStyle(QCPGraph::lsLine);
 
     ui->plot_current->addGraph();
-    ui->plot_current->graph(0)->setScatterStyle(QCPScatterStyle::ssCircle);
-    ui->plot_current->graph(0)->setLineStyle(QCPGraph::lsLine);
+    ui->plot_current->graph()->setScatterStyle(QCPScatterStyle::ssCircle);
+    ui->plot_current->graph()->setLineStyle(QCPGraph::lsLine);
+
+    counterx_plotV = 0;
+    counterx_plotC = 0;
 
     second_thread = new QThread();
 
@@ -82,8 +88,9 @@ void xray::connectWidget()
 
    // connect(ui->pushButton_XrayOn, SIGNAL(clicked())), this, SLOT(on_pushButton_XrayOn_clicked()), Qt::DirectConnection);
     connect(tube,SIGNAL(US_xray_status_data(bool)),this,SLOT(displayXrayOn(bool)));
-
-
+    //plots
+    connect(tube, SIGNAL(US_voltage_data(double)), this, SLOT(addPointV(double)));
+    connect(tube, SIGNAL(US_current_data(double)), this, SLOT(addPointC(double)));
 
     connect(second_thread,  SIGNAL(started()),                                              tube,           SLOT(U_start()));
     connect(tube,           SIGNAL(US_finished()),                                          second_thread,  SLOT(quit()));
@@ -239,6 +246,26 @@ void xray::displayInterlock(double V)
     }
 }
 
+void xray::addPointV(double v)
+{
+    qv_voltage.append(v);
+    plot(ui->plot_voltage,v,counterx_plotV);
+    counterx_plotV+=1;
+    if (counterx_plotV % 20 == 0) {
+        ui->plot_voltage->graph()->data()->clear();
+    }
+}
+
+void xray::addPointC(double c)
+{
+    qv_current.append(c);
+    plot(ui->plot_current,c,counterx_plotC);
+    counterx_plotC+=1;
+    if (counterx_plotV % 20 == 0) {
+        ui->plot_current->graph()->data()->clear();
+    }
+}
+
 void xray::addPoint(double v, double c, double t)
 {
     qv_voltage.append(v);
@@ -246,16 +273,14 @@ void xray::addPoint(double v, double c, double t)
     qv_time.append(t);
 }
 
-void xray::plot()
+void xray::plot(QCustomPlot *qcp, double x, double y)
 {
-    ui->plot_voltage->graph(0)->setData(qv_voltage,qv_time);
-    ui->plot_voltage->replot();
-    ui->plot_voltage->update();
+    qcp->graph()->addData(x,y);
+    qcp->rescaleAxes();
+    qcp->replot(QCustomPlot::rpQueuedReplot);
 
-    ui->plot_current->graph(0)->setData(qv_current,qv_time);
-    ui->plot_current->replot();
-    ui->plot_current->update();
 }
+
 
 void xray::on_pushButtonFaultReset_released()
 {

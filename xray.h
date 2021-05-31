@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QState>
 #include <QSerialPortInfo>
+#include <qcustomplot.h>
 
 #include "uc_tube.h"
 
@@ -31,6 +32,8 @@ public:
     void setDevVoltage(double voltage);
     void setDevCurrent(double current);
     bool xray_enable;
+    int counterx_plotV;
+    int counterx_plotC;
 
 private:
     Ui::xray *ui;
@@ -101,9 +104,10 @@ private slots:
     void display24Vsupply(double V);
     void displayInterlock(double V);
 
+    void addPointV(double v);
+    void addPointC(double c);
     void addPoint(double v, double c, double t);
-    void plot();
-
+    void plot(QCustomPlot *qcp, double x, double y);
 
     void on_pushButtonQuit_released();
     void on_pushButton_XrayOn_clicked();
