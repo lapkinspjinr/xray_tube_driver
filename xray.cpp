@@ -33,10 +33,14 @@ xray::xray(QWidget *parent) :
     ui->plot_voltage->xAxis->setTicker(dateTicker);
     ui->plot_voltage->xAxis->setTickLabels(false);
     //ui->plot_voltage->yAxis->setLabel("Voltage, kV");
+    ui->plot_voltage->yAxis->setRange(0, 120);
+    ui->plot_voltage->xAxis->setRange(0,20);
 
     ui->plot_current->xAxis->setTicker(dateTicker);
     ui->plot_current->xAxis->setTickLabels(false);
     //ui->plot_current->yAxis->setLabel("Current, uA");
+    ui->plot_current->yAxis->setRange(0, 350);
+    ui->plot_current->xAxis->setRange(0,20);
 
     ui->plot_voltage->addGraph();
     ui->plot_voltage->graph()->setScatterStyle(QCPScatterStyle::ssCircle);
@@ -249,20 +253,22 @@ void xray::displayInterlock(double V)
 void xray::addPointV(double v)
 {
     qv_voltage.append(v);
-    plot(ui->plot_voltage,v,counterx_plotV);
+    plot(ui->plot_voltage,counterx_plotV,v);
     counterx_plotV+=1;
     if (counterx_plotV % 20 == 0) {
         ui->plot_voltage->graph()->data()->clear();
+        counterx_plotV = 0;
     }
 }
 
 void xray::addPointC(double c)
 {
     qv_current.append(c);
-    plot(ui->plot_current,c,counterx_plotC);
+    plot(ui->plot_current,counterx_plotC,c);
     counterx_plotC+=1;
     if (counterx_plotV % 20 == 0) {
         ui->plot_current->graph()->data()->clear();
+        counterx_plotC = 0;
     }
 }
 
